@@ -1,12 +1,5 @@
-# =================================================================
-# EVRENSEL DOCKERFILE (CPU ve GPU Uyumlu)
-# =================================================================
-
-# Adım 1: Temel imaj olarak HER ZAMAN NVIDIA imajını kullan.
-# Bu imaj, CPU modunda çalışırken de bir sorun yaratmaz.
 FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
-# Gerekli sistem bağımlılıklarını kur
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -21,28 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Çalışma dizinini ayarla
 WORKDIR /opt/project
 
-# Docker build optimizasyonu için önce requirements dosyasını kopyala
-COPY requirements.gpu.pinned.txt /opt/project/
+COPY requeriments.prod /opt/project/
 
-# --- Kütüphane Kurulumu (GPU Versiyonları) ---
-
-# Adım 2: PyTorch ve TorchVision'ı CUDA 12.1 uyumlu kur
 RUN pip install --no-cache-dir \
     torch==2.3.1 \
     torchvision==0.18.1 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# Adım 3: requirements.gpu.pinned.txt dosyasındaki diğer ana kütüphaneleri kur
-RUN pip install --no-cache-dir -r requirements.gpu.pinned.txt
+RUN pip install --no-cache-dir -r requirements.prod
 
-# Projenin geri kalan tüm kod dosyalarını kopyala
 COPY . /opt/project
 
-# Entrypoint'i çalıştırılabilir yap
 RUN ["chmod", "+x", "/opt/project/entrypoint.sh"]
 
-# Container'ı başlat
 ENTRYPOINT ["/bin/bash", "/opt/project/entrypoint.sh"]
